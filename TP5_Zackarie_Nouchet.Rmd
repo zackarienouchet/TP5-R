@@ -11,10 +11,225 @@ library(tidyverse)
 library(readxl)
 ```
 
-```{r import}
-auto_orig = read.table("data/auto2004_original.txt",
-                       header = TRUE,
-                       sep = "\t",
-                       skip = 3,
-                       fileEncoding = "latin1")
+# Partie A : Importer les fichiers texte récalcitrants
+
+## A1 : Cinq versions d'un même fichier
+```{r A1}
+ref <- read.delim("data/auto2004_original.txt")
+d3 <- read.delim("data/auto2004_original_ligne3.txt", skip = 3)
+d0 <- read.delim("data/auto2004_sans_nom.txt", header = FALSE)
+names(d0) <- names(ref)
+dm <- read.delim("data/auto2004_don_manquante.txt")
+d99 <- read.delim("data/auto2004_don_manquan_99999.txt",
+                  na.strings = "99999")
+signature <- function(x) {
+  list(
+    noms = names(x),
+    dimensions = dim(x),
+    types = sapply(x, class)
+  )
+}
+identical(signature(d3), signature(ref))
+identical(signature(d0), signature(ref))
+identical(signature(dm), signature(ref))
+identical(signature(d99), signature(ref))
 ```
+
+
+
+## A2 : Comparer les valeurs manquantes 
+
+```{r A2 a}
+
+sum(is.na(dm))
+sum(is.na(d99))
+
+
+identical(
+  which(is.na(dm), arr.ind = TRUE),
+  which(is.na(d99), arr.ind = TRUE)
+)
+```
+
+Les deux tableaux contiennent 17 valeurs manquantes et elles se trouvent exactement aux mêmes positions.
+
+```{r A2 b}
+
+pos <- which(is.na(dm), arr.ind = TRUE)
+
+
+data.frame(
+  Modele = ref$Modele[pos[, 1]],
+  Variable = names(ref)[pos[, 2]],
+  Valeur_originale = mapply(
+    function(i, j) ref[[j]][i],
+    pos[, 1],
+    pos[, 2]
+  )
+)
+```
+
+Les valeurs originales sont récupérées dans le tableau de référence `ref`, ce qui permet de retrouver les 17 valeurs remplacées par des données manquantes.
+
+```{r A2 c}
+
+d99_brut <- read.delim("data/auto2004_don_manquan_99999.txt")
+
+moyenne_fausse <- mean(d99_brut$Puissance)
+
+moyenne_correcte <- mean(d99$Puissance, na.rm = TRUE)
+
+erreur <- moyenne_fausse - moyenne_correcte
+
+moyenne_fausse
+moyenne_correcte
+erreur
+```
+
+La moyenne erronée est de 16 848,33 contre 218,20 pour la moyenne correcte. On se trompe donc de 16 630,13 à cause des valeurs 99999 considérées comme de véritables puissances.
+
+## A3 : Des relevés météo à la française
+
+```{r A3 a}
+
+library(readr)
+
+meteo <- read_delim(
+  "data/stations_janvier2026.csv",
+  delim = ";",
+  comment = "#",
+  na = c("n/a", "-"),
+  locale = locale(
+    decimal_mark = ",",
+    encoding = "Latin1"
+  ),
+  col_types = cols(
+    station = col_character(),
+    date = col_date(format = "%d/%m/%Y"),
+    temp_min = col_double(),
+    temp_max = col_double(),
+    pluie_mm = col_double(),
+    vent_kmh = col_double()
+  )
+)
+```
+
+```{r A3 b}
+dim(meteo)
+
+str(meteo)
+
+colSums(is.na(meteo))
+
+range(meteo$date)
+
+unique(meteo$station)
+```
+
+Le tableau contient 124 lignes et 6 colonnes. Il couvre la période du 1er au 31 janvier 2026 et contient quatre stations : Orléans, Besançon, Nîmes et Saint-Étienne. Les colonnes temp_max et vent_kmh contiennent respectivement 6 et 5 valeurs manquantes.
+
+## A4 : Exploiter les relevés
+
+```{r A4 a}
+
+library(dplyr)
+
+
+resultats <- meteo %>%
+  group_by(station) %>%
+  summarise(
+
+    temp_min_moy = mean(temp_min, na.rm = TRUE),
+
+
+    temp_max_moy = mean(temp_max, na.rm = TRUE),
+
+
+    cumul_pluie = sum(pluie_mm, na.rm = TRUE),
+
+
+    jours_gel = sum(temp_min < 0, na.rm = TRUE),
+
+
+    jours_pluie = sum(pluie_mm > 0, na.rm = TRUE)
+  )
+
+
+resultats
+```
+
+Les indicateurs permettent de comparer les températures moyennes, les cumuls de pluie et les nombres de jours de gel et de pluie entre les quatre stations.
+
+```{r A4 b}
+
+resultats %>%
+  slice_max(jours_gel, n = 1)
+
+
+resultats %>%
+  slice_max(jours_pluie, n = 1)
+```
+
+Besançon a connu le plus grand nombre de jours de gel avec 28 jours, ainsi que le plus grand nombre de jours de pluie avec 19 jours.
+
+```{r A4 c}
+
+meteo %>%
+  group_by(station) %>%
+  slice_min(temp_min, n = 1, with_ties = TRUE) %>%
+  select(station, date, temp_min)
+```
+
+Les jours les plus froids sont le 26 janvier à Besançon (-5,1 °C), le 29 janvier à Nîmes (0,1 °C), le 15 janvier à Orléans (-5,4 °C) et le 2 janvier à Saint-Étienne (-5,6 °C).
+
+## A5 : Déboguer des imports 
+
+### 1. Première instruction
+
+```{r}
+p1 <- read.csv2(
+  "data/prix_fr.csv",
+  na.strings = "n/a"
+)
+```
+
+L'instruction initiale utilise le mauvais séparateur et le mauvais format décimal. `read.csv2()` est adapté au format français.
+
+
+### 2. Deuxième instruction
+
+```{r}
+p2 <- read.csv2(
+  "data/prix_fr.csv",
+  na.strings = "n/a"
+)
+```
+
+L'instruction initiale ne reconnaît pas `n/a` comme une valeur manquante. Il faut donc utiliser `na.strings = "n/a"`.
+
+
+### 3. Troisième instruction
+
+```{r}
+p3 <- read_csv2(
+  "data/prix_fr.csv",
+  na = "n/a"
+)
+```
+
+L'instruction initiale ignore la première ligne qui contient les noms des colonnes. Il ne faut donc pas utiliser `skip = 1`.
+
+
+### Vérification des imports corrigés
+
+```{r}
+
+str(p1)
+str(p2)
+str(p3)
+
+
+p3
+```
+
+Les trois imports corrigés permettent de retrouver les cinq produits, avec les colonnes correctement identifiées et le stock manquant du maillot réplique converti en NA.
