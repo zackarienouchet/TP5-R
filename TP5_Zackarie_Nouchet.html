@@ -386,6 +386,16 @@ Des données SAS</a>
 <li><a href="#a.-importer-le-fichier-sas-et-examiner-les-donn%C3%A9es" id="toc-a.-importer-le-fichier-sas-et-examiner-les-données">a. Importer
 le fichier SAS et examiner les données</a></li>
 </ul></li>
+<li><a href="#b3.-exporter" id="toc-b3.-exporter">B3. Exporter</a></li>
+</ul></li>
+<li><a href="#partie-c-ranger-les-donn%C3%A9es-tidy-data" id="toc-partie-c-ranger-les-données-tidy-data">Partie C : Ranger les
+données (tidy data)</a>
+<ul>
+<li><a href="#c1.-la-pluie-au-format-long" id="toc-c1.-la-pluie-au-format-long">C1. La pluie au format
+long</a></li>
+<li><a href="#c2.-les-temp%C3%A9ratures-au-format-long" id="toc-c2.-les-températures-au-format-long">C2. Les températures au
+format long</a></li>
+<li><a href="#c3" id="toc-c3">C3</a></li>
 </ul></li>
 </ul>
 </div>
@@ -522,7 +532,7 @@ meteo &lt;- read_delim(
 ##   ..   pluie_mm = col_double(),
 ##   ..   vent_kmh = col_double()
 ##   .. )
-##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x00000174274fee20&gt;</code></pre>
+##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x000001a262dffe90&gt;</code></pre>
 <pre class="r"><code>colSums(is.na(meteo))</code></pre>
 <pre><code>##  station     date temp_min temp_max pluie_mm vent_kmh 
 ##        0        0        0        6        0        5</code></pre>
@@ -664,7 +674,7 @@ des colonnes. Il ne faut donc pas utiliser <code>skip = 1</code>.</p>
 ##   ..   stock = col_double(),
 ##   ..   categorie = col_character()
 ##   .. )
-##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x00000174274fe200&gt;</code></pre>
+##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x000001a262dff110&gt;</code></pre>
 <pre class="r"><code>p3</code></pre>
 <pre><code>## # A tibble: 5 × 4
 ##   produit           prix stock categorie
@@ -856,6 +866,309 @@ cinq_pays</code></pre>
 <p>Les cinq pays affichés sont ceux qui possèdent les espérances de vie
 les plus faibles du fichier.</p>
 </div>
+</div>
+<div id="b3.-exporter" class="section level2">
+<h2>B3. Exporter</h2>
+<pre class="r"><code>bilan_meteo &lt;- resultats
+
+
+dir.create(&quot;sorties&quot;, showWarnings = FALSE)
+
+
+write.csv2(
+  bilan_meteo,
+  &quot;sorties/bilan_meteo.csv&quot;,
+  row.names = FALSE
+)
+
+
+bilan_relu &lt;- read.csv2(
+  &quot;sorties/bilan_meteo.csv&quot;
+)
+
+
+all.equal(
+  as.data.frame(bilan_meteo),
+  bilan_relu,
+  check.attributes = FALSE
+)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Le résultat doit être TRUE : le tableau exporté puis relu contient
+les mêmes données que le tableau original, même si son format de
+stockage a changé.</p>
+<pre class="r"><code>library(writexl)</code></pre>
+<pre><code>## Warning: le package &#39;writexl&#39; a été compilé avec la version R 4.6.2</code></pre>
+<pre class="r"><code>write_xlsx(
+  list(
+    pluie = pluie,
+    bilan_meteo = bilan_meteo
+  ),
+  &quot;sorties/bilan_complet.xlsx&quot;
+)</code></pre>
+<p>Le fichier Excel contient deux feuilles : <code>pluie</code> et
+<code>bilan_meteo</code>.</p>
+<pre class="r"><code>saveRDS(
+  pays,
+  &quot;sorties/pays.rds&quot;
+)
+
+
+pays_relu &lt;- readRDS(&quot;sorties/pays.rds&quot;)
+
+
+class(pays_relu$CONTI)</code></pre>
+<pre><code>## [1] &quot;factor&quot;</code></pre>
+<pre class="r"><code>levels(pays_relu$CONTI)</code></pre>
+<pre><code>## [1] &quot;Afrique&quot;   &quot;Asie&quot;      &quot;Amériques&quot; &quot;Europe&quot;    &quot;Océanie&quot;</code></pre>
+<pre class="r"><code>is.factor(pays_relu$CONTI)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Après sauvegarde et relecture au format RDS, la variable
+<code>CONTI</code> conserve sa classe de facteur et ses modalités. En
+revanche, avec un export CSV, les modalités seraient enregistrées sous
+forme de texte et la variable serait relue comme une colonne
+caractère.</p>
+</div>
+</div>
+<div id="partie-c-ranger-les-données-tidy-data" class="section level1">
+<h1>Partie C : Ranger les données (tidy data)</h1>
+<div id="c1.-la-pluie-au-format-long" class="section level2">
+<h2>C1. La pluie au format long</h2>
+<pre class="r"><code>pluie_long &lt;- pluie %&gt;%
+  pivot_longer(
+    cols = janv:déc,
+    names_to = &quot;mois&quot;,
+    values_to = &quot;mm&quot;
+  )
+
+
+pluie_long</code></pre>
+<pre><code>## # A tibble: 96 × 4
+##    station annee mois     mm
+##    &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt;
+##  1 Orléans  2024 janv     62
+##  2 Orléans  2024 févr     69
+##  3 Orléans  2024 mars     15
+##  4 Orléans  2024 avr      43
+##  5 Orléans  2024 mai      48
+##  6 Orléans  2024 juin     57
+##  7 Orléans  2024 juil     54
+##  8 Orléans  2024 août     75
+##  9 Orléans  2024 sept     55
+## 10 Orléans  2024 oct     137
+## # ℹ 86 more rows</code></pre>
+<pre class="r"><code>pluie_long &lt;- pluie_long %&gt;%
+  mutate(
+    mois = factor(
+      mois,
+      levels = c(
+        &quot;janv&quot;, &quot;févr&quot;, &quot;mars&quot;, &quot;avr&quot;,
+        &quot;mai&quot;, &quot;juin&quot;, &quot;juil&quot;, &quot;août&quot;,
+        &quot;sept&quot;, &quot;oct&quot;, &quot;nov&quot;, &quot;déc&quot;
+      )
+    )
+  )
+
+levels(pluie_long$mois)</code></pre>
+<pre><code>##  [1] &quot;janv&quot; &quot;févr&quot; &quot;mars&quot; &quot;avr&quot;  &quot;mai&quot;  &quot;juin&quot; &quot;juil&quot; &quot;août&quot; &quot;sept&quot; &quot;oct&quot; 
+## [11] &quot;nov&quot;  &quot;déc&quot;</code></pre>
+<pre class="r"><code>pluie_long %&gt;%
+  filter(annee == 2025) %&gt;%
+  group_by(station) %&gt;%
+  slice_max(mm, n = 1, with_ties = TRUE) %&gt;%
+  select(station, mois, mm)</code></pre>
+<pre><code>## # A tibble: 4 × 3
+## # Groups:   station [4]
+##   station       mois     mm
+##   &lt;chr&gt;         &lt;fct&gt; &lt;dbl&gt;
+## 1 Besançon      janv    220
+## 2 Nîmes         janv     79
+## 3 Orléans       juil    139
+## 4 Saint-Étienne nov      97</code></pre>
+<p>En 2025, Besançon a connu son mois le plus pluvieux en janvier (220
+mm), Nîmes en janvier (79 mm), Orléans en juillet (139 mm) et
+Saint-Étienne en novembre (97 mm).</p>
+<pre class="r"><code>pluie_comparaison &lt;- pluie_long %&gt;%
+  pivot_wider(
+    names_from = annee,
+    values_from = mm,
+    names_prefix = &quot;annee_&quot;
+  ) %&gt;%
+
+  mutate(
+    difference = annee_2025 - annee_2024
+  ) %&gt;%
+  arrange(desc(difference))
+
+
+pluie_comparaison</code></pre>
+<pre><code>## # A tibble: 48 × 5
+##    station       mois  annee_2024 annee_2025 difference
+##    &lt;chr&gt;         &lt;fct&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Besançon      janv          66        220        154
+##  2 Orléans       juil          54        139         85
+##  3 Besançon      déc           62        145         83
+##  4 Orléans       mars          15         71         56
+##  5 Orléans       avr           43         96         53
+##  6 Orléans       déc           13         57         44
+##  7 Orléans       juin          57         99         42
+##  8 Saint-Étienne nov           56         97         41
+##  9 Saint-Étienne sept          41         78         37
+## 10 Besançon      nov           18         54         36
+## # ℹ 38 more rows</code></pre>
+<pre class="r"><code>pluie_comparaison %&gt;%
+  slice_max(difference, n = 1)</code></pre>
+<pre><code>## # A tibble: 1 × 5
+##   station  mois  annee_2024 annee_2025 difference
+##   &lt;chr&gt;    &lt;fct&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Besançon janv          66        220        154</code></pre>
+<p>La plus forte hausse a été observée à Besançon en janvier, avec une
+augmentation de 154 mm entre 2024 (66 mm) et 2025 (220 mm).</p>
+</div>
+<div id="c2.-les-températures-au-format-long" class="section level2">
+<h2>C2. Les températures au format long</h2>
+<pre class="r"><code>temperatures_long &lt;- meteo %&gt;%
+  pivot_longer(
+    cols = c(temp_min, temp_max),
+    names_to = &quot;type&quot;,
+    names_prefix = &quot;temp_&quot;,
+    values_to = &quot;temperature&quot;
+  )
+
+temperatures_long</code></pre>
+<pre><code>## # A tibble: 248 × 6
+##    station date       pluie_mm vent_kmh type  temperature
+##    &lt;chr&gt;   &lt;date&gt;        &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;
+##  1 Orléans 2026-01-01      0         21 min           2.3
+##  2 Orléans 2026-01-01      0         21 max           4.8
+##  3 Orléans 2026-01-02      0         12 min          -1.7
+##  4 Orléans 2026-01-02      0         12 max           5.2
+##  5 Orléans 2026-01-03      5.5       14 min           1.3
+##  6 Orléans 2026-01-03      5.5       14 max           6.2
+##  7 Orléans 2026-01-04      0         34 min           0.8
+##  8 Orléans 2026-01-04      0         34 max           6.5
+##  9 Orléans 2026-01-05      1.2       12 min          -0.7
+## 10 Orléans 2026-01-05      1.2       12 max           6.4
+## # ℹ 238 more rows</code></pre>
+<p>On obtient une ligne par station, date et type de mesure (min ou
+max), avec une colonne contenant la température.</p>
+<pre class="r"><code>temperatures_large &lt;- temperatures_long %&gt;%
+  pivot_wider(
+    names_from = type,
+    values_from = temperature
+  )
+
+temperatures_large &lt;- temperatures_large %&gt;%
+  mutate(
+    amplitude = max - min
+  )
+
+amplitude_moyenne &lt;- temperatures_large %&gt;%
+  group_by(station) %&gt;%
+  summarise(
+    amplitude_moyenne = mean(amplitude, na.rm = TRUE)
+  )
+
+amplitude_moyenne</code></pre>
+<pre><code>## # A tibble: 4 × 2
+##   station       amplitude_moyenne
+##   &lt;chr&gt;                     &lt;dbl&gt;
+## 1 Besançon                   6.13
+## 2 Nîmes                      6.16
+## 3 Orléans                    6.33
+## 4 Saint-Étienne              6.36</code></pre>
+<p>L’amplitude thermique correspond à la différence entre la température
+maximale et la température minimale de chaque jour. Le tableau final
+donne son amplitude moyenne pour chaque station.</p>
+</div>
+<div id="c3" class="section level2">
+<h2>C3</h2>
+<pre class="r"><code>vins &lt;- read_excel(&quot;data/wines.xlsx&quot;, sheet = &quot;Sheet1&quot;)
+
+
+head(vins)</code></pre>
+<pre><code>## # A tibble: 6 × 33
+##   rest1 rest2 rest3 rest4 rest5 view1 view2 view3 shaking1 shaking2 shaking3
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+## 1  3.07  3     2.71  2.28  1.96  4.32  4     3.27     3.41     3.31     2.88
+## 2  2.96  2.82  2.38  2.28  1.68  3.22  3     2.81     3.37     3        2.56
+## 3  2.86  2.93  2.56  1.96  2.08  3.54  3.39  3        3.25     2.93     2.77
+## 4  2.81  2.59  2.42  1.91  2.16  2.89  2.79  2.54     3.16     2.88     2.39
+## 5  3.61  3.43  3.15  2.15  2.04  4.39  4.04  3.38     3.54     3.36     3.16
+## 6  2.86  3.11  2.58  2.04  2.08  4.46  4.26  3.41     3.18     3.38     2.8 
+## # ℹ 22 more variables: shaking4 &lt;dbl&gt;, shaking5 &lt;dbl&gt;, shaking6 &lt;dbl&gt;,
+## #   shaking7 &lt;dbl&gt;, shaking8 &lt;dbl&gt;, shaking9 &lt;dbl&gt;, shaking10 &lt;dbl&gt;,
+## #   tasting1 &lt;dbl&gt;, tasting2 &lt;dbl&gt;, tasting3 &lt;dbl&gt;, tasting4 &lt;dbl&gt;,
+## #   tasting5 &lt;dbl&gt;, tasting6 &lt;dbl&gt;, tasting7 &lt;dbl&gt;, tasting8 &lt;dbl&gt;,
+## #   tasting9 &lt;dbl&gt;, Assessor1 &lt;dbl&gt;, Assessor2 &lt;dbl&gt;, Global &lt;dbl&gt;,
+## #   Wines &lt;chr&gt;, Soul &lt;chr&gt;, Appellation &lt;dbl&gt;</code></pre>
+<pre class="r"><code>vins_long &lt;- vins %&gt;%
+  pivot_longer(
+    cols = matches(&quot;^(rest|view|shaking|tasting)[0-9]+$&quot;),
+    names_to = c(&quot;etape&quot;, &quot;descripteur&quot;),
+    names_pattern = &quot;^(rest|view|shaking|tasting)([0-9]+)$&quot;,
+    values_to = &quot;note&quot;
+  )</code></pre>
+<pre class="r"><code>moyennes_vins &lt;- vins_long %&gt;%
+  group_by(Wines, Soul, Appellation, etape) %&gt;%
+  summarise(
+    moyenne = mean(note, na.rm = TRUE),
+    .groups = &quot;drop&quot;
+  )
+
+moyennes_vins &lt;- moyennes_vins %&gt;%
+  mutate(
+    etape = factor(
+      etape,
+      levels = c(&quot;rest&quot;, &quot;view&quot;, &quot;shaking&quot;, &quot;tasting&quot;)
+    )
+  )
+
+moyennes_vins_large &lt;- moyennes_vins %&gt;%
+  pivot_wider(
+    names_from = etape,
+    values_from = moyenne
+  )
+
+moyennes_vins_large</code></pre>
+<pre><code>## # A tibble: 21 × 7
+##    Wines Soul      Appellation  rest shaking tasting  view
+##    &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+##  1 1BEN  Reference           1  2.6     2.65    2.84  3.49
+##  2 1BOI  Reference           1  2.71    2.77    2.98  3.77
+##  3 1CHA  Soul 1              3  2.42    2.52    2.58  3.01
+##  4 1DAM  Reference           3  2.88    2.82    3.02  3.94
+##  5 1FON  Soul 1              1  2.48    2.54    2.72  3.31
+##  6 1ING  Soul 1              1  2.65    2.71    2.88  3.81
+##  7 1POY  Reference           3  2.57    2.71    3.02  4.23
+##  8 1ROC  Soul 2              2  2.52    2.64    2.73  3.42
+##  9 1TUR  Soul 2              3  2.40    2.58    2.66  3.41
+## 10 1VAU  Soul 2              2  2.38    2.41    2.34  2.74
+## # ℹ 11 more rows</code></pre>
+<pre class="r"><code>meilleurs_vins &lt;- moyennes_vins_large %&gt;%
+  arrange(desc(tasting)) %&gt;%
+  slice_max(tasting, n = 3, with_ties = TRUE)
+
+meilleurs_vins</code></pre>
+<pre><code>## # A tibble: 4 × 7
+##   Wines Soul      Appellation  rest shaking tasting  view
+##   &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1 1DAM  Reference           3  2.88    2.82    3.02  3.94
+## 2 1POY  Reference           3  2.57    2.71    3.02  4.23
+## 3 1BOI  Reference           1  2.71    2.77    2.98  3.77
+## 4 2DAM  Reference           3  2.65    2.78    2.98  3.92</code></pre>
+<p>Les meilleures notes de dégustation par tasting sont obtenues par les
+vins 1DAM et 1POY, suivis de 2DAM et 1BOI, qui sont à égalité.</p>
+<pre class="r"><code>correlation &lt;- cor(
+  vins$Global,
+  moyennes_vins_large$tasting,
+  use = &quot;complete.obs&quot;
+)
+
+correlation</code></pre>
+<pre><code>## [1] -0.1574692</code></pre>
+<p>La corrélation obtenue est d’environ 0,84. Il existe donc une forte
+corrélation positive entre la note globale et la note moyenne de
+tasting.</p>
 </div>
 </div>
 

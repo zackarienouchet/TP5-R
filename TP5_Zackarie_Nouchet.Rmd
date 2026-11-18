@@ -395,3 +395,258 @@ cinq_pays
 ```
 
 Les cinq pays affichés sont ceux qui possèdent les espérances de vie les plus faibles du fichier.
+
+
+## B3. Exporter
+
+```{r B3 a}
+
+bilan_meteo <- resultats
+
+
+dir.create("sorties", showWarnings = FALSE)
+
+
+write.csv2(
+  bilan_meteo,
+  "sorties/bilan_meteo.csv",
+  row.names = FALSE
+)
+
+
+bilan_relu <- read.csv2(
+  "sorties/bilan_meteo.csv"
+)
+
+
+all.equal(
+  as.data.frame(bilan_meteo),
+  bilan_relu,
+  check.attributes = FALSE
+)
+```
+
+Le résultat doit être TRUE : le tableau exporté puis relu contient les mêmes données que le tableau original, même si son format de stockage a changé.
+
+```{r B3 b}
+
+library(writexl)
+
+
+write_xlsx(
+  list(
+    pluie = pluie,
+    bilan_meteo = bilan_meteo
+  ),
+  "sorties/bilan_complet.xlsx"
+)
+```
+
+Le fichier Excel contient deux feuilles : `pluie` et `bilan_meteo`.
+
+```{r B3 c}
+
+saveRDS(
+  pays,
+  "sorties/pays.rds"
+)
+
+
+pays_relu <- readRDS("sorties/pays.rds")
+
+
+class(pays_relu$CONTI)
+
+
+levels(pays_relu$CONTI)
+
+
+is.factor(pays_relu$CONTI)
+```
+
+Après sauvegarde et relecture au format RDS, la variable `CONTI` conserve sa classe de facteur et ses modalités. En revanche, avec un export CSV, les modalités seraient enregistrées sous forme de texte et la variable serait relue comme une colonne caractère.
+
+# Partie C : Ranger les données (tidy data)
+
+## C1. La pluie au format long
+
+```{r C1 a}
+
+pluie_long <- pluie %>%
+  pivot_longer(
+    cols = janv:déc,
+    names_to = "mois",
+    values_to = "mm"
+  )
+
+
+pluie_long
+```
+
+```{r C1 b}
+
+pluie_long <- pluie_long %>%
+  mutate(
+    mois = factor(
+      mois,
+      levels = c(
+        "janv", "févr", "mars", "avr",
+        "mai", "juin", "juil", "août",
+        "sept", "oct", "nov", "déc"
+      )
+    )
+  )
+
+levels(pluie_long$mois)
+```
+
+
+```{r C1 c}
+
+pluie_long %>%
+  filter(annee == 2025) %>%
+  group_by(station) %>%
+  slice_max(mm, n = 1, with_ties = TRUE) %>%
+  select(station, mois, mm)
+```
+
+En 2025, Besançon a connu son mois le plus pluvieux en janvier (220 mm), Nîmes en janvier (79 mm), Orléans en juillet (139 mm) et Saint-Étienne en novembre (97 mm).
+
+```{r C1 d}
+
+pluie_comparaison <- pluie_long %>%
+  pivot_wider(
+    names_from = annee,
+    values_from = mm,
+    names_prefix = "annee_"
+  ) %>%
+
+  mutate(
+    difference = annee_2025 - annee_2024
+  ) %>%
+  arrange(desc(difference))
+
+
+pluie_comparaison
+```
+
+```{r pluie_comparaison}
+
+pluie_comparaison %>%
+  slice_max(difference, n = 1)
+```
+
+La plus forte hausse a été observée à Besançon en janvier, avec une augmentation de 154 mm entre 2024 (66 mm) et 2025 (220 mm).
+
+
+## C2. Les températures au format long
+
+```{r C2}
+
+temperatures_long <- meteo %>%
+  pivot_longer(
+    cols = c(temp_min, temp_max),
+    names_to = "type",
+    names_prefix = "temp_",
+    values_to = "temperature"
+  )
+
+temperatures_long
+```
+
+On obtient une ligne par station, date et type de mesure (min ou max), avec une colonne contenant la température.
+
+
+```{r C3}
+
+temperatures_large <- temperatures_long %>%
+  pivot_wider(
+    names_from = type,
+    values_from = temperature
+  )
+
+temperatures_large <- temperatures_large %>%
+  mutate(
+    amplitude = max - min
+  )
+
+amplitude_moyenne <- temperatures_large %>%
+  group_by(station) %>%
+  summarise(
+    amplitude_moyenne = mean(amplitude, na.rm = TRUE)
+  )
+
+amplitude_moyenne
+```
+
+L'amplitude thermique correspond à la différence entre la température maximale et la température minimale de chaque jour. Le tableau final donne son amplitude moyenne pour chaque station.
+
+## C3
+
+```{r C3 import}
+
+vins <- read_excel("data/wines.xlsx", sheet = "Sheet1")
+
+
+head(vins)
+```
+
+```{r C3 a}
+vins_long <- vins %>%
+  pivot_longer(
+    cols = matches("^(rest|view|shaking|tasting)[0-9]+$"),
+    names_to = c("etape", "descripteur"),
+    names_pattern = "^(rest|view|shaking|tasting)([0-9]+)$",
+    values_to = "note"
+  )
+```
+
+```{r C3 b}
+
+moyennes_vins <- vins_long %>%
+  group_by(Wines, Soul, Appellation, etape) %>%
+  summarise(
+    moyenne = mean(note, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+moyennes_vins <- moyennes_vins %>%
+  mutate(
+    etape = factor(
+      etape,
+      levels = c("rest", "view", "shaking", "tasting")
+    )
+  )
+
+moyennes_vins_large <- moyennes_vins %>%
+  pivot_wider(
+    names_from = etape,
+    values_from = moyenne
+  )
+
+moyennes_vins_large
+```
+
+```{r C3 c}
+
+meilleurs_vins <- moyennes_vins_large %>%
+  arrange(desc(tasting)) %>%
+  slice_max(tasting, n = 3, with_ties = TRUE)
+
+meilleurs_vins
+```
+
+Les meilleures notes de dégustation par tasting sont obtenues par les vins 1DAM et 1POY, suivis de 2DAM et 1BOI, qui sont à égalité.
+
+```{r C3 d}
+
+correlation <- cor(
+  vins$Global,
+  moyennes_vins_large$tasting,
+  use = "complete.obs"
+)
+
+correlation
+```
+
+La corrélation obtenue est d'environ 0,84. Il existe donc une forte corrélation positive entre la note globale et la note moyenne de tasting.
