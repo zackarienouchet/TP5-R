@@ -397,6 +397,50 @@ long</a></li>
 format long</a></li>
 <li><a href="#c3" id="toc-c3">C3</a></li>
 </ul></li>
+<li><a href="#partie-d-nettoyer-un-fichier-rh-et-joindre-des-tables" id="toc-partie-d-nettoyer-un-fichier-rh-et-joindre-des-tables">Partie D
+: Nettoyer un fichier RH et joindre des tables</a>
+<ul>
+<li><a href="#d1.-importer-et-diagnostiquer" id="toc-d1.-importer-et-diagnostiquer">D1. Importer et diagnostiquer</a>
+<ul>
+<li><a href="#importation-du-fichier" id="toc-importation-du-fichier">Importation du fichier</a></li>
+<li><a href="#valeurs-manquantes" id="toc-valeurs-manquantes">Valeurs
+manquantes</a></li>
+<li><a href="#codes-incoh%C3%A9rents" id="toc-codes-incohérents">Codes
+incohérents</a></li>
+<li><a href="#doublons" id="toc-doublons">Doublons</a></li>
+<li><a href="#valeurs-aberrantes-ou-impossibles" id="toc-valeurs-aberrantes-ou-impossibles">Valeurs aberrantes ou
+impossibles</a></li>
+</ul></li>
+<li><a href="#d2.-corriger" id="toc-d2.-corriger">D2. Corriger</a>
+<ul>
+<li><a href="#nettoyage-du-fichier-rh" id="toc-nettoyage-du-fichier-rh">Nettoyage du fichier RH</a></li>
+<li><a href="#v%C3%A9rification-des-corrections" id="toc-vérification-des-corrections">Vérification des
+corrections</a></li>
+</ul></li>
+<li><a href="#d3.-analyser" id="toc-d3.-analyser">D3. Analyser</a>
+<ul>
+<li><a href="#a.-salaire-m%C3%A9dian-par-pays-et-par-sexe" id="toc-a.-salaire-médian-par-pays-et-par-sexe">a. Salaire médian par
+pays et par sexe</a></li>
+<li><a href="#b.-les-cinq-postes-les-plus-fr%C3%A9quents-et-leur-salaire-moyen" id="toc-b.-les-cinq-postes-les-plus-fréquents-et-leur-salaire-moyen">b.
+Les cinq postes les plus fréquents et leur salaire moyen</a></li>
+<li><a href="#c.-%C3%A2ge-moyen-%C3%A0-lembauche-selon-la-d%C3%A9cennie" id="toc-c.-âge-moyen-à-lembauche-selon-la-décennie">c. Âge moyen à
+l’embauche selon la décennie</a></li>
+<li><a href="#d.-%C3%A2ge-minimal-%C3%A0-lembauche-et-employ%C3%A9s-embauch%C3%A9s-avant-16-ans" id="toc-d.-âge-minimal-à-lembauche-et-employés-embauchés-avant-16-ans">d. Âge
+minimal à l’embauche et employés embauchés avant 16 ans</a></li>
+</ul></li>
+<li><a href="#d4.-joindre-les-commandes-et-les-clients" id="toc-d4.-joindre-les-commandes-et-les-clients">D4. Joindre les
+commandes et les clients</a>
+<ul>
+<li><a href="#a.-importer-les-fichiers-et-v%C3%A9rifier-les-clients-absents" id="toc-a.-importer-les-fichiers-et-vérifier-les-clients-absents">a.
+Importer les fichiers et vérifier les clients absents</a></li>
+<li><a href="#b.-ajouter-le-pays-et-le-sexe-du-client-et-calculer-le-ca" id="toc-b.-ajouter-le-pays-et-le-sexe-du-client-et-calculer-le-ca">b.
+Ajouter le pays et le sexe du client et calculer le CA</a></li>
+<li><a href="#c.-relier-les-commandes-aux-employ%C3%A9s" id="toc-c.-relier-les-commandes-aux-employés">c. Relier les commandes
+aux employés</a></li>
+<li><a href="#d.-identifier-le-vendeur-ayant-r%C3%A9alis%C3%A9-le-plus-gros-ca" id="toc-d.-identifier-le-vendeur-ayant-réalisé-le-plus-gros-ca">d. Identifier
+le vendeur ayant réalisé le plus gros CA</a></li>
+</ul></li>
+</ul></li>
 </ul>
 </div>
 
@@ -532,7 +576,7 @@ meteo &lt;- read_delim(
 ##   ..   pluie_mm = col_double(),
 ##   ..   vent_kmh = col_double()
 ##   .. )
-##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x000001a262dffe90&gt;</code></pre>
+##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x0000024210ffd0e0&gt;</code></pre>
 <pre class="r"><code>colSums(is.na(meteo))</code></pre>
 <pre><code>##  station     date temp_min temp_max pluie_mm vent_kmh 
 ##        0        0        0        6        0        5</code></pre>
@@ -674,7 +718,7 @@ des colonnes. Il ne faut donc pas utiliser <code>skip = 1</code>.</p>
 ##   ..   stock = col_double(),
 ##   ..   categorie = col_character()
 ##   .. )
-##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x000001a262dff110&gt;</code></pre>
+##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x0000024210ffee60&gt;</code></pre>
 <pre class="r"><code>p3</code></pre>
 <pre><code>## # A tibble: 5 × 4
 ##   produit           prix stock categorie
@@ -1169,6 +1213,421 @@ correlation</code></pre>
 <p>La corrélation obtenue est d’environ 0,84. Il existe donc une forte
 corrélation positive entre la note globale et la note moyenne de
 tasting.</p>
+</div>
+</div>
+<div id="partie-d-nettoyer-un-fichier-rh-et-joindre-des-tables" class="section level1">
+<h1>Partie D : Nettoyer un fichier RH et joindre des tables</h1>
+<div id="d1.-importer-et-diagnostiquer" class="section level2">
+<h2>D1. Importer et diagnostiquer</h2>
+<div id="importation-du-fichier" class="section level3">
+<h3>Importation du fichier</h3>
+<pre class="r"><code>emp &lt;- read_csv(&quot;data/employee.csv&quot;)</code></pre>
+<pre><code>## Rows: 235 Columns: 9
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (7): First, Last, Gender, Job_Title, Country, Birth_Date, Hire_Date
+## dbl (2): Employee_ID, Salary
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>glimpse(emp)</code></pre>
+<pre><code>## Rows: 235
+## Columns: 9
+## $ Employee_ID &lt;dbl&gt; 120101, 120104, 120105, 120106, 120107, 120108, 120108, 12…
+## $ First       &lt;chr&gt; &quot;Patrick&quot;, &quot;Kareen&quot;, &quot;Liz&quot;, &quot;John&quot;, &quot;Sherie&quot;, &quot;Gladys&quot;, &quot;G…
+## $ Last        &lt;chr&gt; &quot;Lu&quot;, &quot;Billington&quot;, &quot;Povey&quot;, &quot;Hornsey&quot;, &quot;Sheedy&quot;, &quot;Gromek&quot;…
+## $ Gender      &lt;chr&gt; &quot;M&quot;, &quot;F&quot;, &quot;F&quot;, &quot;M&quot;, &quot;F&quot;, &quot;F&quot;, &quot;F&quot;, &quot;M&quot;, &quot;M&quot;, &quot;F&quot;, &quot;F&quot;, &quot;G&quot;…
+## $ Salary      &lt;dbl&gt; 163040, 46230, 27110, NA, 30475, 27660, 26495, 28615, 2689…
+## $ Job_Title   &lt;chr&gt; &quot;Director&quot;, &quot;Administration Manager&quot;, &quot;Secretary I&quot;, &quot;Offi…
+## $ Country     &lt;chr&gt; &quot;AU&quot;, &quot;au&quot;, &quot;AU&quot;, &quot;AU&quot;, &quot;AU&quot;, &quot;AU&quot;, &quot;AU&quot;, &quot;AU&quot;, &quot;AU&quot;, &quot;AU&quot;…
+## $ Birth_Date  &lt;chr&gt; &quot;18/08/1976&quot;, &quot;11/05/1954&quot;, &quot;21/12/1974&quot;, &quot;23/12/1944&quot;, &quot;0…
+## $ Hire_Date   &lt;chr&gt; &quot;01/07/2003&quot;, &quot;01/01/1981&quot;, &quot;01/05/1999&quot;, &quot;01/01/1974&quot;, &quot;2…</code></pre>
+</div>
+<div id="valeurs-manquantes" class="section level3">
+<h3>Valeurs manquantes</h3>
+<pre class="r"><code>colSums(is.na(emp))</code></pre>
+<pre><code>## Employee_ID       First        Last      Gender      Salary   Job_Title 
+##           1           0           0           1           1           1 
+##     Country  Birth_Date   Hire_Date 
+##           0           0           1</code></pre>
+</div>
+<div id="codes-incohérents" class="section level3">
+<h3>Codes incohérents</h3>
+<pre class="r"><code>emp %&gt;%
+  filter(!is.na(Gender), !Gender %in% c(&quot;F&quot;, &quot;M&quot;))</code></pre>
+<pre><code>## # A tibble: 1 × 9
+##   Employee_ID First   Last  Gender Salary Job_Title Country Birth_Date Hire_Date
+##         &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;    
+## 1      120114 Jeanne… Budd… G       31285 Security… AU      08/02/1944 01/01/19…</code></pre>
+<pre class="r"><code>emp %&gt;%
+  filter(Country != toupper(Country))</code></pre>
+<pre><code>## # A tibble: 6 × 9
+##   Employee_ID First   Last  Gender Salary Job_Title Country Birth_Date Hire_Date
+##         &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;    
+## 1      120104 Kareen  Bill… F       46230 Administ… au      11/05/1954 01/01/19…
+## 2      120695 Trent   Moff… M       28180 Warehous… au      13/07/1964 01/07/19…
+## 3      120698 Geoff   Kist… M       26160 Warehous… au      17/05/1954 01/08/19…
+## 4      120747 Zashia  Fart… F       43590 Financia… us      20/06/1974 01/08/19…
+## 5      120994 Danelle Serg… F       31645 Office A… us      16/06/1974 01/11/19…
+## 6      120997 Mary    Dona… F       27420 Shipping… us      21/11/1974 01/09/19…</code></pre>
+</div>
+<div id="doublons" class="section level3">
+<h3>Doublons</h3>
+<pre class="r"><code>emp %&gt;%
+  count(Employee_ID) %&gt;%
+  filter(n &gt; 1)</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##   Employee_ID     n
+##         &lt;dbl&gt; &lt;int&gt;
+## 1      120108     2</code></pre>
+<pre class="r"><code>sum(duplicated(emp))</code></pre>
+<pre><code>## [1] 0</code></pre>
+</div>
+<div id="valeurs-aberrantes-ou-impossibles" class="section level3">
+<h3>Valeurs aberrantes ou impossibles</h3>
+<pre class="r"><code>emp %&gt;%
+  filter(Salary &lt; 10000)</code></pre>
+<pre><code>## # A tibble: 2 × 9
+##   Employee_ID First   Last  Gender Salary Job_Title Country Birth_Date Hire_Date
+##         &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;    
+## 1      120115 Hugh    Nich… M        2650 Service … AU      08/05/1984 01/08/20…
+## 2      120191 Jannene Grah… F        2401 Trainee   AU      17/01/1959 01/01/20…</code></pre>
+<pre class="r"><code>emp %&gt;%
+  mutate(Hire_Date = dmy(Hire_Date)) %&gt;%
+  filter(Hire_Date &lt; ymd(&quot;1974-01-01&quot;))</code></pre>
+<pre><code>## # A tibble: 2 × 9
+##   Employee_ID First  Last  Gender Salary Job_Title Country Birth_Date Hire_Date 
+##         &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;      &lt;date&gt;    
+## 1      120107 Sherie Shee… F       30475 Office A… AU      01/02/1978 1953-01-21
+## 2      121011 Steven Banc… M       25735 Service … US      11/03/1944 1968-01-01</code></pre>
+<pre class="r"><code>emp %&gt;%
+  mutate(
+    Birth_Date = dmy(Birth_Date),
+    Hire_Date = dmy(Hire_Date)
+  ) %&gt;%
+  filter(Birth_Date &gt; Hire_Date)</code></pre>
+<pre><code>## # A tibble: 1 × 9
+##   Employee_ID First  Last  Gender Salary Job_Title Country Birth_Date Hire_Date 
+##         &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;date&gt;     &lt;date&gt;    
+## 1      120107 Sherie Shee… F       30475 Office A… AU      1978-02-01 1953-01-21</code></pre>
+</div>
+</div>
+<div id="d2.-corriger" class="section level2">
+<h2>D2. Corriger</h2>
+<div id="nettoyage-du-fichier-rh" class="section level3">
+<h3>Nettoyage du fichier RH</h3>
+<pre class="r"><code>id_max &lt;- max(emp$Employee_ID, na.rm = TRUE)
+
+emp_propre &lt;- emp %&gt;%
+  mutate(
+    Country = toupper(Country),
+
+    Gender = if_else(
+      Gender %in% c(&quot;F&quot;, &quot;M&quot;),
+      Gender,
+      NA_character_
+    ),
+
+    Salary = if_else(
+      Salary &lt; 10000,
+      Salary * 10,
+      Salary
+    ),
+
+    Birth_Date = dmy(Birth_Date),
+    Hire_Date = dmy(Hire_Date),
+
+    Hire_Date = if_else(
+      Hire_Date &lt; ymd(&quot;1974-01-01&quot;),
+      as.Date(NA),
+      Hire_Date
+    ),
+
+    Employee_ID = if_else(
+      is.na(Employee_ID),
+      id_max + 1,
+      Employee_ID
+    )
+  ) %&gt;%
+  mutate(numero_ligne = row_number()) %&gt;%
+  group_by(Employee_ID) %&gt;%
+  mutate(
+    Employee_ID = if_else(
+      row_number() &gt; 1,
+      id_max + 1 + numero_ligne,
+      Employee_ID
+    )
+  ) %&gt;%
+  ungroup() %&gt;%
+  mutate(
+    age_embauche = floor(
+      time_length(
+        interval(Birth_Date, Hire_Date),
+        unit = &quot;years&quot;
+      )
+    ),
+
+    anciennete = floor(
+      time_length(
+        interval(Hire_Date, ymd(&quot;2007-12-31&quot;)),
+        unit = &quot;years&quot;
+      )
+    )
+  ) %&gt;%
+  select(-numero_ligne)</code></pre>
+</div>
+<div id="vérification-des-corrections" class="section level3">
+<h3>Vérification des corrections</h3>
+<pre class="r"><code>emp_propre %&gt;%
+  filter(Country != toupper(Country))</code></pre>
+<pre><code>## # A tibble: 0 × 11
+## # ℹ 11 variables: Employee_ID &lt;dbl&gt;, First &lt;chr&gt;, Last &lt;chr&gt;, Gender &lt;chr&gt;,
+## #   Salary &lt;dbl&gt;, Job_Title &lt;chr&gt;, Country &lt;chr&gt;, Birth_Date &lt;date&gt;,
+## #   Hire_Date &lt;date&gt;, age_embauche &lt;dbl&gt;, anciennete &lt;dbl&gt;</code></pre>
+<pre class="r"><code>emp_propre %&gt;%
+  filter(!is.na(Gender), !Gender %in% c(&quot;F&quot;, &quot;M&quot;))</code></pre>
+<pre><code>## # A tibble: 0 × 11
+## # ℹ 11 variables: Employee_ID &lt;dbl&gt;, First &lt;chr&gt;, Last &lt;chr&gt;, Gender &lt;chr&gt;,
+## #   Salary &lt;dbl&gt;, Job_Title &lt;chr&gt;, Country &lt;chr&gt;, Birth_Date &lt;date&gt;,
+## #   Hire_Date &lt;date&gt;, age_embauche &lt;dbl&gt;, anciennete &lt;dbl&gt;</code></pre>
+<pre class="r"><code>emp_propre %&gt;%
+  filter(Salary &lt; 10000)</code></pre>
+<pre><code>## # A tibble: 0 × 11
+## # ℹ 11 variables: Employee_ID &lt;dbl&gt;, First &lt;chr&gt;, Last &lt;chr&gt;, Gender &lt;chr&gt;,
+## #   Salary &lt;dbl&gt;, Job_Title &lt;chr&gt;, Country &lt;chr&gt;, Birth_Date &lt;date&gt;,
+## #   Hire_Date &lt;date&gt;, age_embauche &lt;dbl&gt;, anciennete &lt;dbl&gt;</code></pre>
+<pre class="r"><code>emp_propre %&gt;%
+  filter(Hire_Date &lt; ymd(&quot;1974-01-01&quot;))</code></pre>
+<pre><code>## # A tibble: 0 × 11
+## # ℹ 11 variables: Employee_ID &lt;dbl&gt;, First &lt;chr&gt;, Last &lt;chr&gt;, Gender &lt;chr&gt;,
+## #   Salary &lt;dbl&gt;, Job_Title &lt;chr&gt;, Country &lt;chr&gt;, Birth_Date &lt;date&gt;,
+## #   Hire_Date &lt;date&gt;, age_embauche &lt;dbl&gt;, anciennete &lt;dbl&gt;</code></pre>
+<pre class="r"><code>sum(is.na(emp_propre$Employee_ID))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>sum(duplicated(emp_propre$Employee_ID))</code></pre>
+<pre><code>## [1] 0</code></pre>
+</div>
+</div>
+<div id="d3.-analyser" class="section level2">
+<h2>D3. Analyser</h2>
+<div id="a.-salaire-médian-par-pays-et-par-sexe" class="section level3">
+<h3>a. Salaire médian par pays et par sexe</h3>
+<pre class="r"><code>emp_propre %&gt;%
+  group_by(Country, Gender) %&gt;%
+  summarise(
+    salaire_median = median(Salary, na.rm = TRUE),
+    .groups = &quot;drop&quot;
+  )</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   Country Gender salaire_median
+##   &lt;chr&gt;   &lt;chr&gt;           &lt;dbl&gt;
+## 1 AU      F               27110
+## 2 AU      M               28090
+## 3 AU      &lt;NA&gt;            31285
+## 4 US      F               36315
+## 5 US      M               35870
+## 6 US      &lt;NA&gt;            33950</code></pre>
+</div>
+<div id="b.-les-cinq-postes-les-plus-fréquents-et-leur-salaire-moyen" class="section level3">
+<h3>b. Les cinq postes les plus fréquents et leur salaire moyen</h3>
+<pre class="r"><code>emp_propre %&gt;%
+  filter(!is.na(Job_Title)) %&gt;%
+  group_by(Job_Title) %&gt;%
+  summarise(
+    nombre_employes = n(),
+    salaire_moyen = mean(Salary, na.rm = TRUE),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  slice_max(
+    nombre_employes,
+    n = 5,
+    with_ties = TRUE
+  ) %&gt;%
+  arrange(desc(nombre_employes))</code></pre>
+<pre><code>## # A tibble: 8 × 3
+##   Job_Title              nombre_employes salaire_moyen
+##   &lt;chr&gt;                            &lt;int&gt;         &lt;dbl&gt;
+## 1 Trainee                             18        25477.
+## 2 Warehouse Assistant I               10        26262.
+## 3 Purchasing Agent I                   6        30977.
+## 4 Accountant I                         5        31563 
+## 5 Accountant II                        5        37284 
+## 6 Marketing Assistant II               5        29544 
+## 7 Purchasing Agent II                  5        34488 
+## 8 Shipping Manager                     5        57477</code></pre>
+</div>
+<div id="c.-âge-moyen-à-lembauche-selon-la-décennie" class="section level3">
+<h3>c. Âge moyen à l’embauche selon la décennie</h3>
+<pre class="r"><code>emp_propre %&gt;%
+  mutate(
+    decennie = floor(year(Hire_Date) / 10) * 10
+  ) %&gt;%
+  group_by(decennie) %&gt;%
+  summarise(
+    age_moyen = mean(age_embauche, na.rm = TRUE),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  arrange(decennie)</code></pre>
+<pre><code>## # A tibble: 5 × 2
+##   decennie age_moyen
+##      &lt;dbl&gt;     &lt;dbl&gt;
+## 1     1970      25.8
+## 2     1980      23.2
+## 3     1990      23.8
+## 4     2000      23.4
+## 5       NA     NaN</code></pre>
+</div>
+<div id="d.-âge-minimal-à-lembauche-et-employés-embauchés-avant-16-ans" class="section level3">
+<h3>d. Âge minimal à l’embauche et employés embauchés avant 16 ans</h3>
+<pre class="r"><code>min(emp_propre$age_embauche, na.rm = TRUE)</code></pre>
+<pre><code>## [1] 15</code></pre>
+<pre class="r"><code>emp_propre %&gt;%
+  filter(age_embauche &lt; 16) %&gt;%
+  select(
+    First,
+    Last,
+    Birth_Date,
+    Hire_Date,
+    age_embauche
+  )</code></pre>
+<pre><code>## # A tibble: 2 × 5
+##   First    Last   Birth_Date Hire_Date  age_embauche
+##   &lt;chr&gt;    &lt;chr&gt;  &lt;date&gt;     &lt;date&gt;            &lt;dbl&gt;
+## 1 Wesley   Shirts 1988-08-16 2004-05-01           15
+## 2 Kimberly Howell 1988-04-03 2003-04-25           15</code></pre>
+<p>L’âge minimal d’embauche est 15 ans et 2 employés ont été embauchés à
+cet âge-là.</p>
+</div>
+</div>
+<div id="d4.-joindre-les-commandes-et-les-clients" class="section level2">
+<h2>D4. Joindre les commandes et les clients</h2>
+<div id="a.-importer-les-fichiers-et-vérifier-les-clients-absents" class="section level3">
+<h3>a. Importer les fichiers et vérifier les clients absents</h3>
+<pre class="r"><code>commandes &lt;- read_csv(&quot;data/commandes.csv&quot;)</code></pre>
+<pre><code>## Rows: 617 Columns: 10
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl  (8): Customer_ID, Employee_ID, Order_ID, Order_Type, Product_ID, Quanti...
+## date (2): Order_Date, Delivery_Date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>clients &lt;- read_csv(&quot;data/customer.csv&quot;)</code></pre>
+<pre><code>## Rows: 77 Columns: 9
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (5): Country, Gender, Customer_FirstName, Customer_LastName, Customer_A...
+## dbl  (3): Customer_ID, Street_Number, Customer_Type_ID
+## date (1): Birth_Date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>anti_join(
+  commandes,
+  clients,
+  by = &quot;Customer_ID&quot;
+)</code></pre>
+<pre><code>## # A tibble: 0 × 10
+## # ℹ 10 variables: Customer_ID &lt;dbl&gt;, Employee_ID &lt;dbl&gt;, Order_Date &lt;date&gt;,
+## #   Delivery_Date &lt;date&gt;, Order_ID &lt;dbl&gt;, Order_Type &lt;dbl&gt;, Product_ID &lt;dbl&gt;,
+## #   Quantity &lt;dbl&gt;, Total_Retail_Price &lt;dbl&gt;, CostPrice_Per_Unit &lt;dbl&gt;</code></pre>
+</div>
+<div id="b.-ajouter-le-pays-et-le-sexe-du-client-et-calculer-le-ca" class="section level3">
+<h3>b. Ajouter le pays et le sexe du client et calculer le CA</h3>
+<pre class="r"><code>commandes_clients &lt;- commandes %&gt;%
+  left_join(
+    clients %&gt;%
+      select(Customer_ID, Country, Gender),
+    by = &quot;Customer_ID&quot;
+  )
+
+ca_pays &lt;- commandes_clients %&gt;%
+  group_by(Country) %&gt;%
+  summarise(
+    chiffre_affaires = sum(
+      Total_Retail_Price,
+      na.rm = TRUE
+    ),
+    .groups = &quot;drop&quot;
+  )
+
+ca_pays</code></pre>
+<pre><code>## # A tibble: 7 × 2
+##   Country chiffre_affaires
+##   &lt;chr&gt;              &lt;dbl&gt;
+## 1 AU                17321.
+## 2 CA                11951.
+## 3 DE                15395.
+## 4 IL                 1560.
+## 5 TR                 5176.
+## 6 US                43525.
+## 7 ZA                 5150.</code></pre>
+<pre class="r"><code>ca_total &lt;- sum(
+  commandes_clients$Total_Retail_Price,
+  na.rm = TRUE
+)
+
+ca_us &lt;- commandes_clients %&gt;%
+  filter(Country == &quot;US&quot;) %&gt;%
+  summarise(
+    ca = sum(Total_Retail_Price, na.rm = TRUE)
+  ) %&gt;%
+  pull(ca)
+
+part_us &lt;- ca_us / ca_total * 100
+
+part_us</code></pre>
+<pre><code>## [1] 43.4914</code></pre>
+<p>43,49% du CA a été rapporté par des clients américains.</p>
+</div>
+<div id="c.-relier-les-commandes-aux-employés" class="section level3">
+<h3>c. Relier les commandes aux employés</h3>
+<pre class="r"><code>commandes_avec_vendeur &lt;- commandes %&gt;%
+  filter(Employee_ID != 99999999)
+
+ventes_employes &lt;- commandes_avec_vendeur %&gt;%
+  left_join(
+    emp_propre %&gt;%
+      select(
+        Employee_ID,
+        First,
+        Last,
+        Job_Title
+      ),
+    by = &quot;Employee_ID&quot;
+  )
+
+sum(!is.na(ventes_employes$First))</code></pre>
+<pre><code>## [1] 15</code></pre>
+<pre class="r"><code>sum(is.na(ventes_employes$First))</code></pre>
+<pre><code>## [1] 309</code></pre>
+</div>
+<div id="d.-identifier-le-vendeur-ayant-réalisé-le-plus-gros-ca" class="section level3">
+<h3>d. Identifier le vendeur ayant réalisé le plus gros CA</h3>
+<pre class="r"><code>ventes_employes %&gt;%
+  filter(!is.na(First)) %&gt;%
+  group_by(
+    Employee_ID,
+    First,
+    Last,
+    Job_Title
+  ) %&gt;%
+  summarise(
+    chiffre_affaires = sum(
+      Total_Retail_Price,
+      na.rm = TRUE
+    ),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  arrange(desc(chiffre_affaires)) %&gt;%
+  slice_head(n = 1)</code></pre>
+<pre><code>## # A tibble: 1 × 5
+##   Employee_ID First Last    Job_Title            chiffre_affaires
+##         &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;                           &lt;dbl&gt;
+## 1      120732 Kent  Uenking Purchasing Agent III             668.</code></pre>
+<p>Le vendeur ayant réalisé le plus gros CA est Kent Uenking, un
+purchasing agent III.</p>
+</div>
 </div>
 </div>
 

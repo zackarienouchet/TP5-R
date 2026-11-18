@@ -650,3 +650,327 @@ correlation
 ```
 
 La corrélation obtenue est d'environ 0,84. Il existe donc une forte corrélation positive entre la note globale et la note moyenne de tasting.
+
+
+# Partie D : Nettoyer un fichier RH et joindre des tables
+
+## D1. Importer et diagnostiquer
+
+### Importation du fichier
+
+```{r D1 import}
+
+emp <- read_csv("data/employee.csv")
+
+
+glimpse(emp)
+```
+
+### Valeurs manquantes
+
+```{r D1 manquants}
+
+colSums(is.na(emp))
+```
+
+### Codes incohérents
+
+```{r D1 codes}
+
+emp %>%
+  filter(!is.na(Gender), !Gender %in% c("F", "M"))
+
+emp %>%
+  filter(Country != toupper(Country))
+```
+
+### Doublons
+
+```{r D1 doublons} 
+
+emp %>%
+  count(Employee_ID) %>%
+  filter(n > 1)
+
+sum(duplicated(emp))
+```
+
+### Valeurs aberrantes ou impossibles
+
+```{r D1 valeurs}
+emp %>%
+  filter(Salary < 10000)
+
+emp %>%
+  mutate(Hire_Date = dmy(Hire_Date)) %>%
+  filter(Hire_Date < ymd("1974-01-01"))
+
+emp %>%
+  mutate(
+    Birth_Date = dmy(Birth_Date),
+    Hire_Date = dmy(Hire_Date)
+  ) %>%
+  filter(Birth_Date > Hire_Date)
+```
+
+## D2. Corriger
+
+### Nettoyage du fichier RH
+
+```{r D2 nettoyage}
+
+id_max <- max(emp$Employee_ID, na.rm = TRUE)
+
+emp_propre <- emp %>%
+  mutate(
+    Country = toupper(Country),
+
+    Gender = if_else(
+      Gender %in% c("F", "M"),
+      Gender,
+      NA_character_
+    ),
+
+    Salary = if_else(
+      Salary < 10000,
+      Salary * 10,
+      Salary
+    ),
+
+    Birth_Date = dmy(Birth_Date),
+    Hire_Date = dmy(Hire_Date),
+
+    Hire_Date = if_else(
+      Hire_Date < ymd("1974-01-01"),
+      as.Date(NA),
+      Hire_Date
+    ),
+
+    Employee_ID = if_else(
+      is.na(Employee_ID),
+      id_max + 1,
+      Employee_ID
+    )
+  ) %>%
+  mutate(numero_ligne = row_number()) %>%
+  group_by(Employee_ID) %>%
+  mutate(
+    Employee_ID = if_else(
+      row_number() > 1,
+      id_max + 1 + numero_ligne,
+      Employee_ID
+    )
+  ) %>%
+  ungroup() %>%
+  mutate(
+    age_embauche = floor(
+      time_length(
+        interval(Birth_Date, Hire_Date),
+        unit = "years"
+      )
+    ),
+
+    anciennete = floor(
+      time_length(
+        interval(Hire_Date, ymd("2007-12-31")),
+        unit = "years"
+      )
+    )
+  ) %>%
+  select(-numero_ligne)
+```
+
+### Vérification des corrections
+
+```{r D2_verification}
+
+emp_propre %>%
+  filter(Country != toupper(Country))
+
+emp_propre %>%
+  filter(!is.na(Gender), !Gender %in% c("F", "M"))
+
+emp_propre %>%
+  filter(Salary < 10000)
+
+emp_propre %>%
+  filter(Hire_Date < ymd("1974-01-01"))
+
+sum(is.na(emp_propre$Employee_ID))
+sum(duplicated(emp_propre$Employee_ID))
+```
+
+## D3. Analyser
+
+### a. Salaire médian par pays et par sexe
+
+```{r D3a}
+
+emp_propre %>%
+  group_by(Country, Gender) %>%
+  summarise(
+    salaire_median = median(Salary, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+### b. Les cinq postes les plus fréquents et leur salaire moyen
+
+```{r D3b}
+
+emp_propre %>%
+  filter(!is.na(Job_Title)) %>%
+  group_by(Job_Title) %>%
+  summarise(
+    nombre_employes = n(),
+    salaire_moyen = mean(Salary, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  slice_max(
+    nombre_employes,
+    n = 5,
+    with_ties = TRUE
+  ) %>%
+  arrange(desc(nombre_employes))
+```
+
+### c. Âge moyen à l'embauche selon la décennie
+
+```{r D3c}
+
+emp_propre %>%
+  mutate(
+    decennie = floor(year(Hire_Date) / 10) * 10
+  ) %>%
+  group_by(decennie) %>%
+  summarise(
+    age_moyen = mean(age_embauche, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(decennie)
+```
+
+### d. Âge minimal à l'embauche et employés embauchés avant 16 ans
+
+```{r D3d}
+
+min(emp_propre$age_embauche, na.rm = TRUE)
+
+emp_propre %>%
+  filter(age_embauche < 16) %>%
+  select(
+    First,
+    Last,
+    Birth_Date,
+    Hire_Date,
+    age_embauche
+  )
+```
+
+L'âge minimal d'embauche est 15 ans et 2 employés ont été embauchés à cet âge-là.
+
+## D4. Joindre les commandes et les clients
+
+### a. Importer les fichiers et vérifier les clients absents
+
+```{r D4a}
+
+commandes <- read_csv("data/commandes.csv")
+clients <- read_csv("data/customer.csv")
+
+anti_join(
+  commandes,
+  clients,
+  by = "Customer_ID"
+)
+```
+
+### b. Ajouter le pays et le sexe du client et calculer le CA
+
+```{r D4b}
+commandes_clients <- commandes %>%
+  left_join(
+    clients %>%
+      select(Customer_ID, Country, Gender),
+    by = "Customer_ID"
+  )
+
+ca_pays <- commandes_clients %>%
+  group_by(Country) %>%
+  summarise(
+    chiffre_affaires = sum(
+      Total_Retail_Price,
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  )
+
+ca_pays
+
+ca_total <- sum(
+  commandes_clients$Total_Retail_Price,
+  na.rm = TRUE
+)
+
+ca_us <- commandes_clients %>%
+  filter(Country == "US") %>%
+  summarise(
+    ca = sum(Total_Retail_Price, na.rm = TRUE)
+  ) %>%
+  pull(ca)
+
+part_us <- ca_us / ca_total * 100
+
+part_us
+```
+
+43,49% du CA a été rapporté par des clients américains.
+
+### c. Relier les commandes aux employés
+
+```{r D4c}
+
+commandes_avec_vendeur <- commandes %>%
+  filter(Employee_ID != 99999999)
+
+ventes_employes <- commandes_avec_vendeur %>%
+  left_join(
+    emp_propre %>%
+      select(
+        Employee_ID,
+        First,
+        Last,
+        Job_Title
+      ),
+    by = "Employee_ID"
+  )
+
+sum(!is.na(ventes_employes$First))
+
+sum(is.na(ventes_employes$First))
+```
+
+### d. Identifier le vendeur ayant réalisé le plus gros CA
+
+```{r D4d}
+
+ventes_employes %>%
+  filter(!is.na(First)) %>%
+  group_by(
+    Employee_ID,
+    First,
+    Last,
+    Job_Title
+  ) %>%
+  summarise(
+    chiffre_affaires = sum(
+      Total_Retail_Price,
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(chiffre_affaires)) %>%
+  slice_head(n = 1)
+```
+
+Le vendeur ayant réalisé le plus gros CA est Kent Uenking, un purchasing agent III.
