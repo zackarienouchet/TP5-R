@@ -233,3 +233,165 @@ p3
 ```
 
 Les trois imports corrigés permettent de retrouver les cinq produits, avec les colonnes correctement identifiées et le stock manquant du maillot réplique converti en NA.
+
+
+# Partie B : Excel, SAS et export
+
+## B1. Un classeur à plusieurs feuilles
+
+```{r B1 a}
+
+library(readxl)
+
+
+fichier_pluie <- "data/pluie_mensuelle.xlsx"
+
+
+excel_sheets(fichier_pluie)
+```
+
+Le classeur contient deux feuilles nommées 2024 et 2025. Le tableau commence à la ligne 4, après deux lignes de titre et une ligne vide.
+
+```{r B1 b}
+
+pluie2024 <- read_excel(
+  fichier_pluie,
+  sheet = "2024",
+  skip = 3
+)
+
+
+pluie2025 <- read_excel(
+  fichier_pluie,
+  sheet = "2025",
+  skip = 3
+)
+
+
+pluie2024 <- pluie2024 %>%
+  mutate(annee = 2024)
+
+pluie2025 <- pluie2025 %>%
+  mutate(annee = 2025)
+
+
+pluie <- bind_rows(pluie2024, pluie2025)
+
+
+pluie
+```
+
+Les deux feuilles sont importées puis empilées dans un tibble nommé `pluie`, qui contient une colonne numérique `annee` permettant de distinguer les années.
+
+```{r B1 c}
+
+cumul_annuel <- pluie %>%
+  pivot_longer(
+    cols = janv:déc,
+    names_to = "mois",
+    values_to = "pluie_mm"
+  ) %>%
+  group_by(annee, station) %>%
+  summarise(
+    cumul_annuel = sum(pluie_mm, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+cumul_annuel
+```
+
+Ce tableau donne le cumul total des précipitations pour chaque station en 2024 et en 2025.
+
+
+## B2. Des données SAS
+
+### a. Importer le fichier SAS et examiner les données
+
+```{r B2 a}
+
+library(haven)
+
+
+pays <- read_sas("data/paysniv3.sas7bdat")
+
+
+dim(pays)
+
+
+nrow(pays)
+ncol(pays)
+
+
+colSums(is.na(pays))
+
+
+colSums(is.na(pays))[colSums(is.na(pays)) > 0]
+```
+
+Le fichier contient 173 pays. Le nombre de variables et les variables comportant des valeurs manquantes sont identifiés grâce aux commandes précédentes.
+
+```{r B2 b}
+
+pays <- pays %>%
+  mutate(
+    CONTI = factor(
+      CONTI,
+      levels = 1:5,
+      labels = c(
+        "Afrique",
+        "Asie",
+        "Amériques",
+        "Europe",
+        "Océanie"
+      )
+    )
+  )
+
+
+str(pays$CONTI)
+
+
+levels(pays$CONTI)
+```
+
+La variable `CONTI` est maintenant un facteur avec cinq modalités correspondant aux cinq continents.
+
+```{r B2 c}
+
+bilan_continents <- pays %>%
+  group_by(CONTI) %>%
+  summarise(
+
+    nombre_pays = n(),
+
+
+    esperance_vie = mean(ESPER, na.rm = TRUE),
+
+
+    fecondite = mean(FERTI, na.rm = TRUE),
+
+
+    PNB_median = median(PNB, na.rm = TRUE)
+  ) %>%
+
+  arrange(esperance_vie)
+
+
+bilan_continents
+```
+
+Le tableau présente le nombre de pays, l'espérance de vie moyenne, la fécondité moyenne et le PNB médian de chaque continent, classés par espérance de vie croissante.
+
+```{r B2 d}
+
+cinq_pays <- pays %>%
+  arrange(ESPER) %>%
+  select(NOM, ESPER) %>%
+  slice_head(n = 5)
+
+
+cinq_pays
+```
+
+Les cinq pays affichés sont ceux qui possèdent les espérances de vie les plus faibles du fichier.

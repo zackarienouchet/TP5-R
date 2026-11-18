@@ -375,6 +375,18 @@ française</a></li>
 corrigés</a></li>
 </ul></li>
 </ul></li>
+<li><a href="#partie-b-excel-sas-et-export" id="toc-partie-b-excel-sas-et-export">Partie B : Excel, SAS et
+export</a>
+<ul>
+<li><a href="#b1.-un-classeur-%C3%A0-plusieurs-feuilles" id="toc-b1.-un-classeur-à-plusieurs-feuilles">B1. Un classeur à
+plusieurs feuilles</a></li>
+<li><a href="#b2.-des-donn%C3%A9es-sas" id="toc-b2.-des-données-sas">B2.
+Des données SAS</a>
+<ul>
+<li><a href="#a.-importer-le-fichier-sas-et-examiner-les-donn%C3%A9es" id="toc-a.-importer-le-fichier-sas-et-examiner-les-données">a. Importer
+le fichier SAS et examiner les données</a></li>
+</ul></li>
+</ul></li>
 </ul>
 </div>
 
@@ -510,7 +522,7 @@ meteo &lt;- read_delim(
 ##   ..   pluie_mm = col_double(),
 ##   ..   vent_kmh = col_double()
 ##   .. )
-##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x0000020165ffee00&gt;</code></pre>
+##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x00000174274fee20&gt;</code></pre>
 <pre class="r"><code>colSums(is.na(meteo))</code></pre>
 <pre><code>##  station     date temp_min temp_max pluie_mm vent_kmh 
 ##        0        0        0        6        0        5</code></pre>
@@ -652,7 +664,7 @@ des colonnes. Il ne faut donc pas utiliser <code>skip = 1</code>.</p>
 ##   ..   stock = col_double(),
 ##   ..   categorie = col_character()
 ##   .. )
-##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x0000020165ffe1b0&gt;</code></pre>
+##  - attr(*, &quot;problems&quot;)=&lt;pointer: 0x00000174274fe200&gt;</code></pre>
 <pre class="r"><code>p3</code></pre>
 <pre><code>## # A tibble: 5 × 4
 ##   produit           prix stock categorie
@@ -665,6 +677,184 @@ des colonnes. Il ne faut donc pas utiliser <code>skip = 1</code>.</p>
 <p>Les trois imports corrigés permettent de retrouver les cinq produits,
 avec les colonnes correctement identifiées et le stock manquant du
 maillot réplique converti en NA.</p>
+</div>
+</div>
+</div>
+<div id="partie-b-excel-sas-et-export" class="section level1">
+<h1>Partie B : Excel, SAS et export</h1>
+<div id="b1.-un-classeur-à-plusieurs-feuilles" class="section level2">
+<h2>B1. Un classeur à plusieurs feuilles</h2>
+<pre class="r"><code>library(readxl)
+
+
+fichier_pluie &lt;- &quot;data/pluie_mensuelle.xlsx&quot;
+
+
+excel_sheets(fichier_pluie)</code></pre>
+<pre><code>## [1] &quot;2024&quot; &quot;2025&quot;</code></pre>
+<p>Le classeur contient deux feuilles nommées 2024 et 2025. Le tableau
+commence à la ligne 4, après deux lignes de titre et une ligne vide.</p>
+<pre class="r"><code>pluie2024 &lt;- read_excel(
+  fichier_pluie,
+  sheet = &quot;2024&quot;,
+  skip = 3
+)
+
+
+pluie2025 &lt;- read_excel(
+  fichier_pluie,
+  sheet = &quot;2025&quot;,
+  skip = 3
+)
+
+
+pluie2024 &lt;- pluie2024 %&gt;%
+  mutate(annee = 2024)
+
+pluie2025 &lt;- pluie2025 %&gt;%
+  mutate(annee = 2025)
+
+
+pluie &lt;- bind_rows(pluie2024, pluie2025)
+
+
+pluie</code></pre>
+<pre><code>## # A tibble: 8 × 14
+##   station       janv  févr  mars   avr   mai  juin  juil  août  sept   oct   nov
+##   &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 Orléans         62    69    15    43    48    57    54    75    55   137    35
+## 2 Besançon        66    18    28    48    47    59    56    83    75    66    18
+## 3 Nîmes           78    78    27    26    55    67   140    40    71    36    29
+## 4 Saint-Étien…    80    52    69    58    70    17    31    58    41    59    56
+## 5 Orléans         20    29    71    96    81    99   139    71    55    87    58
+## 6 Besançon       220    34    28    57    31    45    13    46    35    45    54
+## 7 Nîmes           79     9    36    31    22    25    54    52    29    28    25
+## 8 Saint-Étien…    72    78    41    56    65    36    16    35    78    39    97
+## # ℹ 2 more variables: déc &lt;dbl&gt;, annee &lt;dbl&gt;</code></pre>
+<p>Les deux feuilles sont importées puis empilées dans un tibble nommé
+<code>pluie</code>, qui contient une colonne numérique
+<code>annee</code> permettant de distinguer les années.</p>
+<pre class="r"><code>cumul_annuel &lt;- pluie %&gt;%
+  pivot_longer(
+    cols = janv:déc,
+    names_to = &quot;mois&quot;,
+    values_to = &quot;pluie_mm&quot;
+  ) %&gt;%
+  group_by(annee, station) %&gt;%
+  summarise(
+    cumul_annuel = sum(pluie_mm, na.rm = TRUE),
+    .groups = &quot;drop&quot;
+  )
+
+
+cumul_annuel</code></pre>
+<pre><code>## # A tibble: 8 × 3
+##   annee station       cumul_annuel
+##   &lt;dbl&gt; &lt;chr&gt;                &lt;dbl&gt;
+## 1  2024 Besançon               626
+## 2  2024 Nîmes                  674
+## 3  2024 Orléans                663
+## 4  2024 Saint-Étienne          651
+## 5  2025 Besançon               753
+## 6  2025 Nîmes                  419
+## 7  2025 Orléans                863
+## 8  2025 Saint-Étienne          677</code></pre>
+<p>Ce tableau donne le cumul total des précipitations pour chaque
+station en 2024 et en 2025.</p>
+</div>
+<div id="b2.-des-données-sas" class="section level2">
+<h2>B2. Des données SAS</h2>
+<div id="a.-importer-le-fichier-sas-et-examiner-les-données" class="section level3">
+<h3>a. Importer le fichier SAS et examiner les données</h3>
+<pre class="r"><code>library(haven)</code></pre>
+<pre><code>## Warning: le package &#39;haven&#39; a été compilé avec la version R 4.6.1</code></pre>
+<pre class="r"><code>pays &lt;- read_sas(&quot;data/paysniv3.sas7bdat&quot;)
+
+
+dim(pays)</code></pre>
+<pre><code>## [1] 173  25</code></pre>
+<pre class="r"><code>nrow(pays)</code></pre>
+<pre><code>## [1] 173</code></pre>
+<pre class="r"><code>ncol(pays)</code></pre>
+<pre><code>## [1] 25</code></pre>
+<pre class="r"><code>colSums(is.na(pays))</code></pre>
+<pre><code>##   NOM POP87   NAT  MORT  ACCR  DOUB POP00 POP20 MORTI FERTI AGE15 AGE65 ESPER 
+##     0     0     0     0     0     4     0     0     0     0     0     0     0 
+##  URBA   EAU ENERG ENERT   PNB  SURF CULTU PATUR FORET  PAYS   NIV CONTI 
+##     3    90    36    35    10     1     2     2     2     0     0     0</code></pre>
+<pre class="r"><code>colSums(is.na(pays))[colSums(is.na(pays)) &gt; 0]</code></pre>
+<pre><code>##  DOUB  URBA   EAU ENERG ENERT   PNB  SURF CULTU PATUR FORET 
+##     4     3    90    36    35    10     1     2     2     2</code></pre>
+<p>Le fichier contient 173 pays. Le nombre de variables et les variables
+comportant des valeurs manquantes sont identifiés grâce aux commandes
+précédentes.</p>
+<pre class="r"><code>pays &lt;- pays %&gt;%
+  mutate(
+    CONTI = factor(
+      CONTI,
+      levels = 1:5,
+      labels = c(
+        &quot;Afrique&quot;,
+        &quot;Asie&quot;,
+        &quot;Amériques&quot;,
+        &quot;Europe&quot;,
+        &quot;Océanie&quot;
+      )
+    )
+  )
+
+
+str(pays$CONTI)</code></pre>
+<pre><code>##  Factor w/ 5 levels &quot;Afrique&quot;,&quot;Asie&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...</code></pre>
+<pre class="r"><code>levels(pays$CONTI)</code></pre>
+<pre><code>## [1] &quot;Afrique&quot;   &quot;Asie&quot;      &quot;Amériques&quot; &quot;Europe&quot;    &quot;Océanie&quot;</code></pre>
+<p>La variable <code>CONTI</code> est maintenant un facteur avec cinq
+modalités correspondant aux cinq continents.</p>
+<pre class="r"><code>bilan_continents &lt;- pays %&gt;%
+  group_by(CONTI) %&gt;%
+  summarise(
+
+    nombre_pays = n(),
+
+    esperance_vie = mean(ESPER, na.rm = TRUE),
+
+    fecondite = mean(FERTI, na.rm = TRUE),
+
+    PNB_median = median(PNB, na.rm = TRUE)
+  ) %&gt;%
+
+  arrange(esperance_vie)
+
+
+bilan_continents</code></pre>
+<pre><code>## # A tibble: 5 × 5
+##   CONTI     nombre_pays esperance_vie fecondite PNB_median
+##   &lt;fct&gt;           &lt;int&gt;         &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Afrique            53          50.8      6.11        370
+## 2 Asie               44          60.8      4.88       1150
+## 3 Océanie             9          67.9      4.06       1700
+## 4 Amériques          39          68.4      3.43       1320
+## 5 Europe             28          73.5      1.87       8335</code></pre>
+<p>Le tableau présente le nombre de pays, l’espérance de vie moyenne, la
+fécondité moyenne et le PNB médian de chaque continent, classés par
+espérance de vie croissante.</p>
+<pre class="r"><code>cinq_pays &lt;- pays %&gt;%
+  arrange(ESPER) %&gt;%
+  select(NOM, ESPER) %&gt;%
+  slice_head(n = 5)
+
+
+cinq_pays</code></pre>
+<pre><code>## # A tibble: 5 × 2
+##   NOM          ESPER
+##   &lt;chr&gt;        &lt;dbl&gt;
+## 1 SIERRA LEONE    35
+## 2 GAMBIA          36
+## 3 AFGANISTHAN     39
+## 4 EAST TIMOR      40
+## 5 GUINEA          41</code></pre>
+<p>Les cinq pays affichés sont ceux qui possèdent les espérances de vie
+les plus faibles du fichier.</p>
 </div>
 </div>
 </div>
